@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>{{ app_name }}</h1>
+<p>Sample enterprise application protected by single sign-on (Keycloak, OpenID Connect) with tiered multi-factor authentication.</p>
+{% if claims %}
+  <p>Signed in as <strong>{{ claims.username }}</strong> at <span class="pill {{ claims.aal }}">{{ claims.aal }}</span>.</p>
+  <p><a class="btn" href="/me">View my session</a></p>
+{% else %}
+  <p><a class="btn" href="/login">Sign in with Enterprise SSO</a></p>
+{% endif %}
+{% endblock %}

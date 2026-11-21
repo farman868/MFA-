@@ -1,0 +1,27 @@
+# rlm_rest: delegate the authenticate step to mfa-otp-bridge, which splits password+OTP and
+# validates both against Keycloak (client vpn-radius, direct grant: password + TOTP).
+rest {
+	connect_uri = "http://mfa-otp-bridge:8000"
+	connect_timeout = 4.0
+
+	authenticate {
+		uri = "${..connect_uri}/radius/authenticate"
+		method = "post"
+		body = "json"
+		auth = "basic"
+		username = "%{User-Name}"
+		password = "%{User-Password}"
+		timeout = 10.0
+	}
+
+	pool {
+		start = 0
+		min = 0
+		max = 16
+		spare = 4
+		uses = 0
+		retry_delay = 30
+		lifetime = 0
+		idle_timeout = 60
+	}
+}

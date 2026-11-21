@@ -1,0 +1,1251 @@
+{
+  "id": "enterprise-realm",
+  "realm": "enterprise-realm",
+  "displayName": "Enterprise Corp",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+  "passwordPolicy": "length(14) and notUsername and notEmail",
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "accessTokenLifespan": 300,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 10,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "quickLoginCheckMilliSeconds": 1000,
+  "minimumQuickLoginWaitSeconds": 60,
+  "maxDeltaTimeSeconds": 43200,
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
+  "otpPolicyLookAheadWindow": 1,
+  "otpPolicyInitialCounter": 0,
+  "otpPolicyCodeReusable": false,
+  "webAuthnPolicyRpEntityName": "Enterprise Corp IAM",
+  "webAuthnPolicySignatureAlgorithms": [
+    "ES256",
+    "RS256"
+  ],
+  "webAuthnPolicyRpId": "",
+  "webAuthnPolicyAttestationConveyancePreference": "not specified",
+  "webAuthnPolicyAuthenticatorAttachment": "not specified",
+  "webAuthnPolicyRequireResidentKey": "not specified",
+  "webAuthnPolicyUserVerificationRequirement": "preferred",
+  "webAuthnPolicyCreateTimeout": 0,
+  "webAuthnPolicyAvoidSameAuthenticatorRegister": false,
+  "webAuthnPolicyAcceptableAaguids": [],
+  "webAuthnPolicyExtraOrigins": [],
+  "webAuthnPolicyPasswordlessRpEntityName": "Enterprise Corp IAM",
+  "webAuthnPolicyPasswordlessSignatureAlgorithms": [
+    "ES256",
+    "RS256"
+  ],
+  "webAuthnPolicyPasswordlessRpId": "",
+  "webAuthnPolicyPasswordlessAttestationConveyancePreference": "not specified",
+  "webAuthnPolicyPasswordlessAuthenticatorAttachment": "not specified",
+  "webAuthnPolicyPasswordlessRequireResidentKey": "Yes",
+  "webAuthnPolicyPasswordlessUserVerificationRequirement": "required",
+  "webAuthnPolicyPasswordlessCreateTimeout": 0,
+  "webAuthnPolicyPasswordlessAvoidSameAuthenticatorRegister": false,
+  "webAuthnPolicyPasswordlessAcceptableAaguids": [],
+  "webAuthnPolicyPasswordlessExtraOrigins": [],
+  "eventsEnabled": true,
+  "eventsExpiration": 604800,
+  "eventsListeners": [
+    "jboss-logging"
+  ],
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": true,
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "iam-noreply@corp.enterprise.local",
+    "fromDisplayName": "Enterprise Corp IAM",
+    "replyTo": "",
+    "auth": "false",
+    "ssl": "false",
+    "starttls": "false"
+  },
+  "roles": {
+    "realm": [
+      {
+        "name": "mfa-tier-webauthn",
+        "description": "AAL3 tier: phishing-resistant FIDO2/WebAuthn (platform biometrics or hardware key) required",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "mfa-tier-totp",
+        "description": "AAL2 tier: TOTP authenticator app required",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "mfa-tier-otp-fallback",
+        "description": "Accessibility / no-smartphone fallback: SMS or Email OTP via mfa-otp-bridge",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "it-admins",
+        "description": "Privileged IT and IAM administrators",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "vpn-users",
+        "description": "Authorized for OpenVPN remote access (RADIUS + TOTP)",
+        "composite": false,
+        "clientRole": false
+      }
+    ]
+  },
+  "browserFlow": "enterprise-browser",
+  "users": [
+    {
+      "username": "svc.mfa-probe",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "MFA",
+      "lastName": "Probe",
+      "email": "svc.mfa-probe@corp.enterprise.local",
+      "attributes": {
+        "department": [
+          "ServiceAccounts"
+        ],
+        "purpose": [
+          "Synthetic monitoring of SSO, VPN and SIEM pipelines (lab automation)"
+        ]
+      },
+      "realmRoles": [
+        "default-roles-enterprise-realm",
+        "mfa-tier-totp",
+        "vpn-users"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${SVC_PROBE_PASSWORD}",
+          "temporary": false
+        },
+        {
+          "type": "otp",
+          "userLabel": "probe-automation",
+          "secretData": "{\"value\": \"${SVC_PROBE_TOTP_SEED}\"}",
+          "credentialData": "{\"subType\": \"totp\", \"digits\": 6, \"counter\": 0, \"period\": 30, \"algorithm\": \"HmacSHA1\"}"
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "corp-portal",
+      "name": "Corp Portal (OIDC sample app)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${CORP_PORTAL_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "rootUrl": "http://localhost:5000",
+      "baseUrl": "/",
+      "redirectUris": [
+        "http://localhost:5000/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:5000"
+      ],
+      "frontchannelLogout": true,
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5000/"
+      },
+      "protocolMappers": [
+        {
+          "name": "session-note-mfa_method",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "mfa_method",
+            "claim.name": "mfa_method",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "session-note-aal",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "aal",
+            "claim.name": "aal",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "department",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "department",
+            "claim.name": "department",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "realm-roles-in-id-token",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "realm_roles",
+            "multivalued": "true",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "hr-portal",
+      "name": "HR Self-Service (second OIDC app)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${HR_PORTAL_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "rootUrl": "http://localhost:5001",
+      "baseUrl": "/",
+      "redirectUris": [
+        "http://localhost:5001/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:5001"
+      ],
+      "frontchannelLogout": true,
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5001/"
+      },
+      "protocolMappers": [
+        {
+          "name": "session-note-mfa_method",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "mfa_method",
+            "claim.name": "mfa_method",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "session-note-aal",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "aal",
+            "claim.name": "aal",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "department",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "department",
+            "claim.name": "department",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "realm-roles-in-id-token",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "realm_roles",
+            "multivalued": "true",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "vpn-radius",
+      "name": "OpenVPN via FreeRADIUS (direct grant, password+TOTP)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${VPN_RADIUS_CLIENT_SECRET}",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [],
+      "webOrigins": [],
+      "authenticationFlowBindingOverrides": {
+        "direct_grant": "flow-vpn-direct-grant"
+      }
+    }
+  ],
+  "components": {
+    "org.keycloak.storage.UserStorageProvider": [
+      {
+        "id": "corp-ldap",
+        "name": "corp-ldap",
+        "providerId": "ldap",
+        "subComponents": {
+          "org.keycloak.storage.ldap.mappers.LDAPStorageMapper": [
+            {
+              "name": "username",
+              "providerId": "user-attribute-ldap-mapper",
+              "subComponents": {},
+              "config": {
+                "ldap.attribute": [
+                  "uid"
+                ],
+                "user.model.attribute": [
+                  "username"
+                ],
+                "read.only": [
+                  "true"
+                ],
+                "always.read.value.from.ldap": [
+                  "true"
+                ],
+                "is.mandatory.in.ldap": [
+                  "true"
+                ],
+                "is.binary.attribute": [
+                  "false"
+                ],
+                "attribute.force.default": [
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "email",
+              "providerId": "user-attribute-ldap-mapper",
+              "subComponents": {},
+              "config": {
+                "ldap.attribute": [
+                  "mail"
+                ],
+                "user.model.attribute": [
+                  "email"
+                ],
+                "read.only": [
+                  "true"
+                ],
+                "always.read.value.from.ldap": [
+                  "true"
+                ],
+                "is.mandatory.in.ldap": [
+                  "false"
+                ],
+                "is.binary.attribute": [
+                  "false"
+                ],
+                "attribute.force.default": [
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "first name",
+              "providerId": "user-attribute-ldap-mapper",
+              "subComponents": {},
+              "config": {
+                "ldap.attribute": [
+                  "givenName"
+                ],
+                "user.model.attribute": [
+                  "firstName"
+                ],
+                "read.only": [
+                  "true"
+                ],
+                "always.read.value.from.ldap": [
+                  "true"
+                ],
+                "is.mandatory.in.ldap": [
+                  "false"
+                ],
+                "is.binary.attribute": [
+                  "false"
+                ],
+                "attribute.force.default": [
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "last name",
+              "providerId": "user-attribute-ldap-mapper",
+              "subComponents": {},
+              "config": {
+                "ldap.attribute": [
+                  "sn"
+                ],
+                "user.model.attribute": [
+                  "lastName"
+                ],
+                "read.only": [
+                  "true"
+                ],
+                "always.read.value.from.ldap": [
+                  "true"
+                ],
+                "is.mandatory.in.ldap": [
+                  "true"
+                ],
+                "is.binary.attribute": [
+                  "false"
+                ],
+                "attribute.force.default": [
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "mobile",
+              "providerId": "user-attribute-ldap-mapper",
+              "subComponents": {},
+              "config": {
+                "ldap.attribute": [
+                  "mobile"
+                ],
+                "user.model.attribute": [
+                  "mobile"
+                ],
+                "read.only": [
+                  "true"
+                ],
+                "always.read.value.from.ldap": [
+                  "true"
+                ],
+                "is.mandatory.in.ldap": [
+                  "false"
+                ],
+                "is.binary.attribute": [
+                  "false"
+                ],
+                "attribute.force.default": [
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "department",
+              "providerId": "user-attribute-ldap-mapper",
+              "subComponents": {},
+              "config": {
+                "ldap.attribute": [
+                  "departmentNumber"
+                ],
+                "user.model.attribute": [
+                  "department"
+                ],
+                "read.only": [
+                  "true"
+                ],
+                "always.read.value.from.ldap": [
+                  "true"
+                ],
+                "is.mandatory.in.ldap": [
+                  "false"
+                ],
+                "is.binary.attribute": [
+                  "false"
+                ],
+                "attribute.force.default": [
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "job title",
+              "providerId": "user-attribute-ldap-mapper",
+              "subComponents": {},
+              "config": {
+                "ldap.attribute": [
+                  "title"
+                ],
+                "user.model.attribute": [
+                  "jobTitle"
+                ],
+                "read.only": [
+                  "true"
+                ],
+                "always.read.value.from.ldap": [
+                  "true"
+                ],
+                "is.mandatory.in.ldap": [
+                  "false"
+                ],
+                "is.binary.attribute": [
+                  "false"
+                ],
+                "attribute.force.default": [
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "creation date",
+              "providerId": "user-attribute-ldap-mapper",
+              "subComponents": {},
+              "config": {
+                "ldap.attribute": [
+                  "createTimestamp"
+                ],
+                "user.model.attribute": [
+                  "createTimestamp"
+                ],
+                "read.only": [
+                  "true"
+                ],
+                "always.read.value.from.ldap": [
+                  "true"
+                ],
+                "is.mandatory.in.ldap": [
+                  "false"
+                ],
+                "is.binary.attribute": [
+                  "false"
+                ],
+                "attribute.force.default": [
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "modify date",
+              "providerId": "user-attribute-ldap-mapper",
+              "subComponents": {},
+              "config": {
+                "ldap.attribute": [
+                  "modifyTimestamp"
+                ],
+                "user.model.attribute": [
+                  "modifyTimestamp"
+                ],
+                "read.only": [
+                  "true"
+                ],
+                "always.read.value.from.ldap": [
+                  "true"
+                ],
+                "is.mandatory.in.ldap": [
+                  "false"
+                ],
+                "is.binary.attribute": [
+                  "false"
+                ],
+                "attribute.force.default": [
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "ldap-groups-to-realm-roles",
+              "providerId": "role-ldap-mapper",
+              "subComponents": {},
+              "config": {
+                "roles.dn": [
+                  "ou=Groups,dc=corp,dc=enterprise,dc=local"
+                ],
+                "role.name.ldap.attribute": [
+                  "cn"
+                ],
+                "role.object.classes": [
+                  "groupOfNames"
+                ],
+                "membership.ldap.attribute": [
+                  "member"
+                ],
+                "membership.attribute.type": [
+                  "DN"
+                ],
+                "membership.user.ldap.attribute": [
+                  "uid"
+                ],
+                "roles.ldap.filter": [
+                  ""
+                ],
+                "mode": [
+                  "READ_ONLY"
+                ],
+                "user.roles.retrieve.strategy": [
+                  "LOAD_ROLES_BY_MEMBER_ATTRIBUTE"
+                ],
+                "memberof.ldap.attribute": [
+                  "memberOf"
+                ],
+                "use.realm.roles.mapping": [
+                  "true"
+                ],
+                "client.id": [
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        "config": {
+          "enabled": [
+            "true"
+          ],
+          "priority": [
+            "0"
+          ],
+          "vendor": [
+            "other"
+          ],
+          "connectionUrl": [
+            "ldap://openldap:389"
+          ],
+          "startTls": [
+            "false"
+          ],
+          "authType": [
+            "simple"
+          ],
+          "bindDn": [
+            "cn=readonly,dc=corp,dc=enterprise,dc=local"
+          ],
+          "bindCredential": [
+            "${LDAP_READONLY_PASSWORD}"
+          ],
+          "usersDn": [
+            "dc=corp,dc=enterprise,dc=local"
+          ],
+          "searchScope": [
+            "2"
+          ],
+          "customUserSearchFilter": [
+            "(objectClass=inetOrgPerson)"
+          ],
+          "usernameLDAPAttribute": [
+            "uid"
+          ],
+          "rdnLDAPAttribute": [
+            "uid"
+          ],
+          "uuidLDAPAttribute": [
+            "entryUUID"
+          ],
+          "userObjectClasses": [
+            "inetOrgPerson, organizationalPerson, person"
+          ],
+          "editMode": [
+            "READ_ONLY"
+          ],
+          "importEnabled": [
+            "true"
+          ],
+          "syncRegistrations": [
+            "false"
+          ],
+          "trustEmail": [
+            "true"
+          ],
+          "pagination": [
+            "false"
+          ],
+          "connectionPooling": [
+            "true"
+          ],
+          "batchSizeForSync": [
+            "1000"
+          ],
+          "fullSyncPeriod": [
+            "3600"
+          ],
+          "changedSyncPeriod": [
+            "300"
+          ],
+          "cachePolicy": [
+            "DEFAULT"
+          ],
+          "allowKerberosAuthentication": [
+            "false"
+          ],
+          "useKerberosForPasswordAuthentication": [
+            "false"
+          ],
+          "validatePasswordPolicy": [
+            "false"
+          ],
+          "connectionTimeout": [
+            "5000"
+          ],
+          "readTimeout": [
+            "10000"
+          ]
+        }
+      }
+    ]
+  },
+  "authenticatorConfig": [
+    {
+      "alias": "cond-role-webauthn",
+      "config": {
+        "condUserRole": "mfa-tier-webauthn",
+        "negate": "false"
+      }
+    },
+    {
+      "alias": "cond-role-totp",
+      "config": {
+        "condUserRole": "mfa-tier-totp",
+        "negate": "false"
+      }
+    },
+    {
+      "alias": "cond-role-fallback",
+      "config": {
+        "condUserRole": "mfa-tier-otp-fallback",
+        "negate": "false"
+      }
+    },
+    {
+      "alias": "cond-enrol-not-fallback",
+      "config": {
+        "condUserRole": "mfa-tier-otp-fallback",
+        "negate": "true"
+      }
+    },
+    {
+      "alias": "cond-not-webauthn",
+      "config": {
+        "condUserRole": "mfa-tier-webauthn",
+        "negate": "true"
+      }
+    },
+    {
+      "alias": "cond-not-totp",
+      "config": {
+        "condUserRole": "mfa-tier-totp",
+        "negate": "true"
+      }
+    },
+    {
+      "alias": "cond-not-fallback",
+      "config": {
+        "condUserRole": "mfa-tier-otp-fallback",
+        "negate": "true"
+      }
+    },
+    {
+      "alias": "deny-untiered",
+      "config": {
+        "denyErrorMessage": "Your account is not assigned to an MFA tier. Contact the IT service desk."
+      }
+    },
+    {
+      "alias": "note-webauthn",
+      "config": {
+        "mfa.method": "webauthn",
+        "aal": "AAL3",
+        "credential.type": "webauthn"
+      }
+    },
+    {
+      "alias": "note-totp",
+      "config": {
+        "mfa.method": "totp",
+        "aal": "AAL2",
+        "credential.type": "otp"
+      }
+    },
+    {
+      "alias": "note-recovery-aal3-tier",
+      "config": {
+        "mfa.method": "recovery-code",
+        "aal": "AAL2",
+        "credential.type": "recovery-authn-codes"
+      }
+    },
+    {
+      "alias": "note-recovery-aal2-tier",
+      "config": {
+        "mfa.method": "recovery-code",
+        "aal": "AAL2",
+        "credential.type": "recovery-authn-codes"
+      }
+    },
+    {
+      "alias": "bridge-otp",
+      "config": {
+        "bridge.url": "http://mfa-otp-bridge:8000",
+        "purpose": "signin"
+      }
+    },
+    {
+      "alias": "bridge-otp-enrolment",
+      "config": {
+        "bridge.url": "http://mfa-otp-bridge:8000",
+        "purpose": "enrolment"
+      }
+    }
+  ],
+  "authenticationFlows": [
+    {
+      "id": "flow-enterprise-browser",
+      "alias": "enterprise-browser",
+      "description": "Cookie SSO, then password + role-based MFA tier",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "auth-cookie",
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticatorFlow": true,
+          "flowAlias": "enterprise-browser-forms",
+          "requirement": "ALTERNATIVE",
+          "priority": 20,
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "id": "flow-enterprise-browser-forms",
+      "alias": "enterprise-browser-forms",
+      "description": "Password, initial-enrolment OTP if needed, then exactly one MFA tier",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "auth-username-password-form",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticatorFlow": true,
+          "flowAlias": "initial-enrolment-otp",
+          "requirement": "CONDITIONAL",
+          "priority": 15,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticatorFlow": true,
+          "flowAlias": "tier-aal3-phishing-resistant",
+          "requirement": "CONDITIONAL",
+          "priority": 20,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticatorFlow": true,
+          "flowAlias": "tier-aal2-totp",
+          "requirement": "CONDITIONAL",
+          "priority": 30,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticatorFlow": true,
+          "flowAlias": "tier-fallback-sms-email-otp",
+          "requirement": "CONDITIONAL",
+          "priority": 40,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticatorFlow": true,
+          "flowAlias": "tier-none-deny",
+          "requirement": "CONDITIONAL",
+          "priority": 50,
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "id": "flow-initial-enrolment",
+      "alias": "initial-enrolment-otp",
+      "description": "First sign-in: verify SMS/Email OTP before an authenticator can be registered",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "condition-no-mfa-enrolled",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "conditional-user-role",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 11,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "cond-enrol-not-fallback"
+        },
+        {
+          "authenticator": "bridge-otp-authenticator",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "bridge-otp-enrolment"
+        }
+      ]
+    },
+    {
+      "id": "flow-tier-aal3",
+      "alias": "tier-aal3-phishing-resistant",
+      "description": "Executive/Engineering: WebAuthn (platform biometrics or FIDO2 key); backup codes as recovery",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "conditional-user-role",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "cond-role-webauthn"
+        },
+        {
+          "authenticatorFlow": true,
+          "flowAlias": "aal3-factor",
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "id": "flow-aal3-factor",
+      "alias": "aal3-factor",
+      "description": "One of: WebAuthn, or a backup (recovery) code",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": true,
+          "flowAlias": "aal3-webauthn",
+          "requirement": "ALTERNATIVE",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticatorFlow": true,
+          "flowAlias": "aal3-recovery-code",
+          "requirement": "ALTERNATIVE",
+          "priority": 20,
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "id": "flow-aal3-webauthn",
+      "alias": "aal3-webauthn",
+      "description": "WebAuthn assertion",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "webauthn-authenticator",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "mfa-assurance-note",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "note-webauthn"
+        }
+      ]
+    },
+    {
+      "id": "flow-aal3-recovery",
+      "alias": "aal3-recovery-code",
+      "description": "Backup code (downgrades session to AAL2: no admin access)",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "auth-recovery-authn-code-form",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "mfa-assurance-note",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "note-recovery-aal3-tier"
+        }
+      ]
+    },
+    {
+      "id": "flow-tier-aal2",
+      "alias": "tier-aal2-totp",
+      "description": "General staff/Finance/Contractors: TOTP authenticator app; backup codes as recovery",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "conditional-user-role",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "cond-role-totp"
+        },
+        {
+          "authenticatorFlow": true,
+          "flowAlias": "aal2-factor",
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "id": "flow-aal2-factor",
+      "alias": "aal2-factor",
+      "description": "One of: TOTP, or a backup (recovery) code",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": true,
+          "flowAlias": "aal2-totp",
+          "requirement": "ALTERNATIVE",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticatorFlow": true,
+          "flowAlias": "aal2-recovery-code",
+          "requirement": "ALTERNATIVE",
+          "priority": 20,
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "id": "flow-aal2-totp",
+      "alias": "aal2-totp",
+      "description": "TOTP code",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "auth-otp-form",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "mfa-assurance-note",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "note-totp"
+        }
+      ]
+    },
+    {
+      "id": "flow-aal2-recovery",
+      "alias": "aal2-recovery-code",
+      "description": "Backup code",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "auth-recovery-authn-code-form",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "mfa-assurance-note",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "note-recovery-aal2-tier"
+        }
+      ]
+    },
+    {
+      "id": "flow-tier-fallback",
+      "alias": "tier-fallback-sms-email-otp",
+      "description": "Accessibility/no-smartphone: SMS or Email OTP via mfa-otp-bridge",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "conditional-user-role",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "cond-role-fallback"
+        },
+        {
+          "authenticator": "bridge-otp-authenticator",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "bridge-otp"
+        }
+      ]
+    },
+    {
+      "id": "flow-tier-none",
+      "alias": "tier-none-deny",
+      "description": "Default deny for accounts without an MFA tier",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "conditional-user-role",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "cond-not-webauthn"
+        },
+        {
+          "authenticator": "conditional-user-role",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 11,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "cond-not-totp"
+        },
+        {
+          "authenticator": "conditional-user-role",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 12,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "cond-not-fallback"
+        },
+        {
+          "authenticator": "deny-access-authenticator",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenticatorConfig": "deny-untiered"
+        }
+      ]
+    },
+    {
+      "id": "flow-vpn-direct-grant",
+      "alias": "vpn-direct-grant",
+      "description": "RADIUS/VPN: username + password + TOTP in one exchange",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "direct-grant-validate-username",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "direct-grant-validate-password",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "direct-grant-validate-otp",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 30,
+          "userSetupAllowed": false
+        }
+      ]
+    }
+  ]
+}

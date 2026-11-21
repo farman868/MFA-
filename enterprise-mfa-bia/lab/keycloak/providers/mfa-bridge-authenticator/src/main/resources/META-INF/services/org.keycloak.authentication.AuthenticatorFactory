@@ -1,0 +1,3 @@
+local.enterprise.iam.BridgeOtpAuthenticatorFactory
+local.enterprise.iam.AssuranceNoteAuthenticatorFactory
+local.enterprise.iam.NoMfaEnrolledConditionFactory

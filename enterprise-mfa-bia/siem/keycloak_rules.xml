@@ -1,0 +1,209 @@
+<!--
+  Wazuh rules - Keycloak / MFA monitoring and detection for enterprise-realm
+  Install: /var/ossec/etc/rules/keycloak_rules.xml   (mounted read-only by lab/docker-compose.yml)
+  Rule ID range: 100500-100549   Decoder: keycloak_decoders.xml
+
+  Usage tracking (informational)        Detection (alerting)
+    100501 successful sign-in             100510 brute force: >= 6 failed sign-ins, same user + IP, 120 s
+    100502 failed sign-in                 100512 password spraying: >= 8 failures, same IP, many users, 180 s
+    100503 failed second factor           100522 OTP bombing: >= 5 OTP requests for one user, 180 s
+    100520 OTP sent                       100523 repeated MFA failures: >= 5 for one user, 180 s
+    100526 fallback MFA used              100524 CRITICAL sign-in after OTP bombing / MFA failures, 600 s
+    100531 VPN sign-in                    100533 VPN brute force: >= 6 failed VPN logins, 120 s
+                                          100540 same user from 2+ IPs within 15 min
+  Incident-response audit trail: 100504 account locked, 100505/100506 MFA changes, 100507 sessions revoked,
+  100508 account modified by admin, 100509 OTP channel locked/unlocked.
+  Thresholds are lab defaults; tune them after a baseline period in production.
+-->
+
+<group name="keycloak,authentication,mfa,">
+
+  <!-- ============================ BASE CLASSIFICATION ============================ -->
+
+  <rule id="100500" level="2">
+    <decoded_as>keycloak-events</decoded_as>
+    <description>Keycloak/MFA security event in realm $(keycloak.realm).</description>
+    <group>keycloak_base,</group>
+  </rule>
+
+  <rule id="100501" level="3">
+    <if_sid>100500</if_sid>
+    <field name="keycloak.type">^LOGIN$</field>
+    <description>Keycloak: $(keycloak.username) signed in to $(keycloak.client_id) from $(srcip) (MFA: $(keycloak.mfa_method)).</description>
+    <group>authentication_success,</group>
+  </rule>
+
+  <rule id="100502" level="5">
+    <if_sid>100500</if_sid>
+    <field name="keycloak.type">^LOGIN_ERROR$</field>
+    <description>Keycloak: failed sign-in for $(keycloak.username) from $(srcip) (reason: $(keycloak.error)).</description>
+    <group>authentication_failed,</group>
+  </rule>
+
+  <rule id="100503" level="6">
+    <if_sid>100502</if_sid>
+    <field name="keycloak.error" type="pcre2">^(?:invalid_otp|invalid_totp|expired_code|too_many_attempts|webauthn_error|invalid_authenticator|mfa_verification_failed)$</field>
+    <description>Keycloak MFA failure: invalid or expired second factor ($(keycloak.mfa_method)) for $(keycloak.username) from $(srcip).</description>
+    <group>authentication_failed,mfa_failure,</group>
+  </rule>
+
+  <rule id="100504" level="9">
+    <if_sid>100502</if_sid>
+    <field name="keycloak.error" type="pcre2">^(?:user_temporarily_disabled|user_disabled)$</field>
+    <description>Keycloak: sign-in attempt on locked/disabled account $(keycloak.username) from $(srcip) (brute-force protection engaged).</description>
+    <group>authentication_failed,account_locked,</group>
+  </rule>
+
+  <rule id="100505" level="8">
+    <if_sid>100500</if_sid>
+    <field name="keycloak.type" type="pcre2">^(?:UPDATE_TOTP|REMOVE_TOTP|UPDATE_CREDENTIAL|REMOVE_CREDENTIAL)$</field>
+    <description>Keycloak MFA change: $(keycloak.type) ($(keycloak.mfa_method)) for $(keycloak.username) from $(srcip).</description>
+    <group>mfa_modification,</group>
+  </rule>
+
+  <rule id="100506" level="9">
+    <if_sid>100500</if_sid>
+    <field name="keycloak.operation">^DELETE$</field>
+    <field name="keycloak.resource_path" type="pcre2">^users/[^/]+/credentials/</field>
+    <description>Keycloak admin event: an MFA/credential was deleted for a user ($(keycloak.resource_path)) by admin $(keycloak.user_id) from $(srcip).</description>
+    <group>mfa_modification,admin_event,</group>
+  </rule>
+
+  <rule id="100507" level="5">
+    <if_sid>100500</if_sid>
+    <field name="keycloak.operation" type="pcre2">^(?:ACTION|DELETE)$</field>
+    <field name="keycloak.resource_path" type="pcre2">^(?:users/[^/]+/logout|sessions/)</field>
+    <description>Keycloak admin event: user sessions revoked ($(keycloak.resource_path)) - incident containment action.</description>
+    <group>admin_event,ir_containment,</group>
+  </rule>
+
+  <rule id="100508" level="6">
+    <if_sid>100500</if_sid>
+    <field name="keycloak.operation">^UPDATE$</field>
+    <field name="keycloak.resource_path" type="pcre2">^users/[^/]+$</field>
+    <description>Keycloak admin event: user account modified ($(keycloak.resource_path)) - e.g. disabled/enabled during incident response.</description>
+    <group>admin_event,ir_containment,</group>
+  </rule>
+
+  <rule id="100509" level="6">
+    <if_sid>100500</if_sid>
+    <field name="keycloak.type" type="pcre2">^(?:OTP_CHANNEL_LOCKED|OTP_CHANNEL_UNLOCKED|OTP_THROTTLE_RESET)$</field>
+    <description>mfa-otp-bridge: $(keycloak.type) for $(keycloak.username) (incident response action).</description>
+    <group>ir_containment,</group>
+  </rule>
+
+  <!-- ====================== BRUTE FORCE / PASSWORD SPRAYING ====================== -->
+
+  <rule id="100510" level="10" frequency="6" timeframe="120">
+    <if_matched_sid>100502</if_matched_sid>
+    <same_source_ip />
+    <same_field>keycloak.username</same_field>
+    <description>Keycloak brute force: repeated failed sign-ins for $(keycloak.username) from $(srcip).</description>
+    <group>authentication_failures,bruteforce,</group>
+  </rule>
+
+  <rule id="100511" level="13" timeframe="300">
+    <if_sid>100501</if_sid>
+    <if_matched_sid>100510</if_matched_sid>
+    <same_source_ip />
+    <same_field>keycloak.username</same_field>
+    <description>CRITICAL Keycloak: $(keycloak.username) signed in from $(srcip) right after a brute-force burst - possible account compromise.</description>
+    <group>account_compromise,bruteforce,</group>
+  </rule>
+
+  <rule id="100512" level="10" frequency="8" timeframe="180">
+    <if_matched_sid>100502</if_matched_sid>
+    <same_source_ip />
+    <different_field>keycloak.username</different_field>
+    <description>Keycloak password spraying: failed sign-ins for many different accounts from $(srcip).</description>
+    <group>authentication_failures,password_spray,</group>
+  </rule>
+
+  <!-- ========================= MFA FATIGUE / OTP BOMBING ========================= -->
+
+  <rule id="100520" level="3">
+    <if_sid>100500</if_sid>
+    <field name="keycloak.type">^SEND_OTP$</field>
+    <description>MFA challenge: $(keycloak.mfa_method) code sent to $(keycloak.username) (sign-in from $(srcip)).</description>
+    <group>mfa_challenge,</group>
+  </rule>
+
+  <rule id="100521" level="7">
+    <if_sid>100520</if_sid>
+    <field name="keycloak.error" type="pcre2">^(?:rate_limited|delivery_failed|account_locked)$</field>
+    <description>MFA challenge refused ($(keycloak.error)) for $(keycloak.username) from $(srcip) - OTP send throttling engaged.</description>
+    <group>mfa_challenge,mfa_throttled,</group>
+  </rule>
+
+  <rule id="100522" level="11" frequency="5" timeframe="180">
+    <if_matched_group>mfa_challenge</if_matched_group>
+    <same_field>keycloak.username</same_field>
+    <description>MFA fatigue / OTP bombing: rapid repeated one-time-code requests for $(keycloak.username) from $(srcip).</description>
+    <group>mfa_fatigue,credential_access,</group>
+  </rule>
+
+  <rule id="100523" level="11" frequency="5" timeframe="180">
+    <if_matched_sid>100503</if_matched_sid>
+    <same_field>keycloak.username</same_field>
+    <description>MFA brute force: repeated failed second-factor verifications for $(keycloak.username) from $(srcip).</description>
+    <group>mfa_fatigue,authentication_failures,</group>
+  </rule>
+
+  <rule id="100524" level="14" timeframe="600">
+    <if_sid>100501</if_sid>
+    <if_matched_group>mfa_fatigue</if_matched_group>
+    <same_field>keycloak.username</same_field>
+    <description>CRITICAL MFA fatigue success: $(keycloak.username) signed in from $(srcip) after an OTP-bombing / MFA-failure burst.</description>
+    <group>account_compromise,mfa_fatigue,</group>
+  </rule>
+
+  <rule id="100525" level="3">
+    <if_sid>100500</if_sid>
+    <field name="keycloak.type" type="pcre2">^(?:OTP_VERIFIED|OTP_VERIFY_ERROR)$</field>
+    <description>mfa-otp-bridge: $(keycloak.type) for $(keycloak.username) ($(keycloak.mfa_method)).</description>
+    <group>mfa_verification,</group>
+  </rule>
+
+  <!-- ============================ VPN / REMOTE ACCESS ============================ -->
+
+  <rule id="100531" level="3">
+    <if_sid>100500</if_sid>
+    <field name="keycloak.type">^RADIUS_AUTH$</field>
+    <description>VPN: $(keycloak.username) authenticated with password + TOTP from $(srcip).</description>
+    <group>vpn,authentication_success,</group>
+  </rule>
+
+  <rule id="100532" level="5">
+    <if_sid>100500</if_sid>
+    <field name="keycloak.type">^RADIUS_AUTH_ERROR$</field>
+    <description>VPN: authentication failed for $(keycloak.username) from $(srcip) (reason: $(keycloak.error)).</description>
+    <group>vpn,authentication_failed,</group>
+  </rule>
+
+  <rule id="100533" level="10" frequency="6" timeframe="120">
+    <if_matched_sid>100532</if_matched_sid>
+    <same_field>keycloak.username</same_field>
+    <description>VPN brute force: repeated failed RADIUS/MFA authentications for $(keycloak.username).</description>
+    <group>vpn,authentication_failures,bruteforce,</group>
+  </rule>
+
+  <!-- ============================== SESSION ANOMALIES ============================ -->
+
+  <rule id="100540" level="10" frequency="2" timeframe="900">
+    <if_matched_sid>100501</if_matched_sid>
+    <same_field>keycloak.username</same_field>
+    <different_srcip />
+    <description>Anomalous sessions: $(keycloak.username) signed in from multiple IP addresses within 15 minutes (latest $(srcip)).</description>
+    <group>anomalous_login,</group>
+  </rule>
+
+  <!-- ============================== FALLBACK USAGE =============================== -->
+
+  <rule id="100526" level="4">
+    <if_sid>100501</if_sid>
+    <field name="keycloak.mfa_method" type="pcre2">^(?:sms-otp|email-otp|recovery-code)$</field>
+    <description>Fallback MFA used: $(keycloak.username) signed in with $(keycloak.mfa_method) from $(srcip).</description>
+    <group>authentication_success,mfa_fallback,</group>
+  </rule>
+
+</group>

@@ -1,0 +1,260 @@
+# Enterprise MFA lab - "Implementing a Robust Multi-Factor Authentication (MFA) System in an Enterprise Environment"
+# Start with ../scripts/setup_lab.sh (generates lab/.env with random secrets, builds, provisions, verifies).
+# All published ports bind to 127.0.0.1 only.
+
+name: enterprise-mfa-lab
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+
+  # ---------------------------------------------------------------- directory (legacy single-factor baseline)
+  openldap:
+    <<: *restart
+    image: osixia/openldap:1.5.0
+    # Apple Silicon: if the image fails to start, uncomment the next line (runs under emulation).
+    # platform: linux/amd64
+    command: --copy-service --loglevel info
+    environment:
+      LDAP_ORGANISATION: "Enterprise Corp"
+      LDAP_DOMAIN: "corp.enterprise.local"
+      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD:?run scripts/setup_lab.sh}
+      LDAP_CONFIG_PASSWORD: ${LDAP_CONFIG_PASSWORD:?}
+      LDAP_READONLY_USER: "true"
+      LDAP_READONLY_USER_USERNAME: "readonly"
+      LDAP_READONLY_USER_PASSWORD: ${LDAP_READONLY_PASSWORD:?}
+      LDAP_TLS_ENFORCE: "false"
+    volumes:
+      - ./openldap/ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom:ro
+      - ldap-data:/var/lib/ldap
+      - ldap-config:/etc/ldap/slapd.d
+    ports:
+      - "127.0.0.1:389:389"
+    healthcheck:
+      test: ["CMD-SHELL", "ldapsearch -x -H ldap://localhost -b dc=corp,dc=enterprise,dc=local -D cn=readonly,dc=corp,dc=enterprise,dc=local -w \"$$LDAP_READONLY_USER_PASSWORD\" '(uid=j.doe)' uid | grep -q 'uid: j.doe'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  # ---------------------------------------------------------------- identity provider + SSO
+  postgres:
+    <<: *restart
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD:?}
+    volumes:
+      - kc-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  keycloak:
+    <<: *restart
+    build: ./keycloak
+    image: enterprise-mfa-lab/keycloak:26.0.7-mfa
+    command:
+      - start
+      - --optimized
+      - --import-realm
+      - --http-enabled=true
+      - --hostname=http://localhost:8080
+      - --hostname-backchannel-dynamic=true
+      - --log=console,file
+      - --log-file=/var/log/keycloak/keycloak.log
+      - --spi-events-listener-jboss-logging-success-level=info
+      - --spi-events-listener-jboss-logging-error-level=warn
+    environment:
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      # Bounded heap: keeps the whole lab inside a 7 GB CI runner or laptop VM
+      JAVA_OPTS_KC_HEAP: "-Xms256m -Xmx768m"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN_USER:-kcadmin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:?}
+      # Placeholders resolved inside keycloak/realm/enterprise-realm.json at import time
+      LDAP_READONLY_PASSWORD: ${LDAP_READONLY_PASSWORD}
+      CORP_PORTAL_CLIENT_SECRET: ${CORP_PORTAL_CLIENT_SECRET:?}
+      HR_PORTAL_CLIENT_SECRET: ${HR_PORTAL_CLIENT_SECRET:?}
+      VPN_RADIUS_CLIENT_SECRET: ${VPN_RADIUS_CLIENT_SECRET:?}
+      SVC_PROBE_PASSWORD: ${SVC_PROBE_PASSWORD:?}
+      SVC_PROBE_TOTP_SEED: ${SVC_PROBE_TOTP_SEED:?}
+      # Used by the bridge-otp-authenticator SPI
+      MFA_BRIDGE_URL: http://mfa-otp-bridge:8000
+      MFA_BRIDGE_API_KEY: ${BRIDGE_API_KEY:?}
+    volumes:
+      - ./keycloak/realm:/opt/keycloak/data/import:ro
+      - kc-logs:/var/log/keycloak
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      postgres: { condition: service_healthy }
+      openldap: { condition: service_healthy }
+      mailpit: { condition: service_started }
+      mfa-otp-bridge: { condition: service_started }
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 40
+      start_period: 30s
+
+  # ---------------------------------------------------------------- OTP channels
+  mailpit:
+    <<: *restart
+    image: axllent/mailpit:v1.21
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+    ports:
+      - "127.0.0.1:8025:8025"
+
+  mfa-otp-bridge:
+    <<: *restart
+    build: ./mfa-otp-bridge
+    image: enterprise-mfa-lab/mfa-otp-bridge:1.0
+    environment:
+      BRIDGE_API_KEY: ${BRIDGE_API_KEY}
+      OTP_HMAC_KEY: ${OTP_HMAC_KEY:?}
+      OTP_TTL_SECONDS: "300"
+      OTP_MAX_ATTEMPTS: "5"
+      OTP_SEND_LIMIT_PER_MINUTE: "3"
+      OTP_SEND_LIMIT_PER_HOUR: "10"
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      KEYCLOAK_TOKEN_URL: http://keycloak:8080/realms/enterprise-realm/protocol/openid-connect/token
+      KEYCLOAK_LOGOUT_URL: http://keycloak:8080/realms/enterprise-realm/protocol/openid-connect/logout
+      VPN_CLIENT_ID: vpn-radius
+      VPN_CLIENT_SECRET: ${VPN_RADIUS_CLIENT_SECRET}
+      VPN_REQUIRED_ROLE: vpn-users
+      RADIUS_ALLOWED_HOSTS: freeradius
+      SMS_OUTBOX_ENABLED: "true"
+      EVENT_LOG: /var/log/mfa/bridge-events.log
+    volumes:
+      - bridge-logs:/var/log/mfa
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  # ---------------------------------------------------------------- sample SSO application
+  corp-portal:
+    <<: *restart
+    build: ./corp-portal
+    image: enterprise-mfa-lab/corp-portal:1.0
+    environment:
+      KC_PUBLIC_URL: http://localhost:8080
+      KC_INTERNAL_URL: http://keycloak:8080
+      KC_REALM: enterprise-realm
+      OIDC_CLIENT_ID: corp-portal
+      OIDC_CLIENT_SECRET: ${CORP_PORTAL_CLIENT_SECRET}
+      APP_PUBLIC_URL: http://localhost:5000
+      FLASK_SECRET_KEY: ${PORTAL_SESSION_KEY:?}
+      # Legacy single-factor baseline (/legacy) used by scripts/assess_baseline.py
+      LEGACY_LDAP_URL: ldap://openldap:389
+      LEGACY_LDAP_BIND_DN: cn=readonly,dc=corp,dc=enterprise,dc=local
+      LEGACY_LDAP_BIND_PASSWORD: ${LDAP_READONLY_PASSWORD}
+    ports:
+      - "127.0.0.1:5000:5000"
+    depends_on:
+      keycloak: { condition: service_healthy }
+      openldap: { condition: service_healthy }
+
+  hr-portal:
+    # Same OIDC application image registered as a second client: proves single sign-on across applications.
+    <<: *restart
+    image: enterprise-mfa-lab/corp-portal:1.0
+    environment:
+      APP_NAME: HR Self-Service
+      KC_PUBLIC_URL: http://localhost:8080
+      KC_INTERNAL_URL: http://keycloak:8080
+      KC_REALM: enterprise-realm
+      OIDC_CLIENT_ID: hr-portal
+      OIDC_CLIENT_SECRET: ${HR_PORTAL_CLIENT_SECRET:?}
+      APP_PUBLIC_URL: http://localhost:5001
+      FLASK_SECRET_KEY: ${PORTAL_SESSION_KEY}-hr
+      LEGACY_LDAP_BIND_PASSWORD: ${LDAP_READONLY_PASSWORD}
+    ports:
+      - "127.0.0.1:5001:5000"
+    depends_on:
+      corp-portal: { condition: service_started }
+      keycloak: { condition: service_healthy }
+
+  # ---------------------------------------------------------------- VPN + RADIUS
+  freeradius:
+    <<: *restart
+    build: ./freeradius
+    image: enterprise-mfa-lab/freeradius:3.2-mfa
+    environment:
+      RADIUS_SHARED_SECRET: ${RADIUS_SHARED_SECRET:?}
+    ports:
+      - "127.0.0.1:1812:1812/udp"
+    depends_on:
+      - mfa-otp-bridge
+
+  openvpn:
+    <<: *restart
+    build: ./openvpn
+    image: enterprise-mfa-lab/openvpn:2.6-radius
+    cap_add: [NET_ADMIN]
+    devices: ["/dev/net/tun:/dev/net/tun"]
+    environment:
+      RADIUS_SHARED_SECRET: ${RADIUS_SHARED_SECRET}
+      RADIUS_SERVER: freeradius:1812
+    volumes:
+      - openvpn-pki:/etc/openvpn/pki
+      - vpn-client-share:/etc/openvpn/client-share
+    ports:
+      - "127.0.0.1:1194:1194/udp"
+    depends_on:
+      - freeradius
+
+  vpn-client:
+    profiles: ["vpn-test"]
+    build: ./vpn-client
+    image: enterprise-mfa-lab/vpn-client:test
+    cap_add: [NET_ADMIN]
+    devices: ["/dev/net/tun:/dev/net/tun"]
+    environment:
+      VPN_USER: svc.mfa-probe
+      VPN_PASSWORD: ${SVC_PROBE_PASSWORD}
+      VPN_TOTP_SEED: ${SVC_PROBE_TOTP_SEED}
+      MODE: ${VPN_TEST_MODE:-good}
+    volumes:
+      - vpn-client-share:/etc/openvpn/client-share:ro
+    depends_on:
+      - openvpn
+
+  # ---------------------------------------------------------------- SIEM
+  wazuh-manager:
+    <<: *restart
+    image: wazuh/wazuh-manager:4.9.2
+    hostname: wazuh-manager
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+      nofile: { soft: 655360, hard: 655360 }
+    environment:
+      # No indexer/dashboard in this lab: analysisd writes alerts to /var/ossec/logs/alerts/alerts.json.
+      FILEBEAT_SSL_VERIFICATION_MODE: none
+    volumes:
+      - ../siem/keycloak_decoders.xml:/var/ossec/etc/decoders/keycloak_decoders.xml:ro
+      - ../siem/keycloak_rules.xml:/var/ossec/etc/rules/keycloak_rules.xml:ro
+      - kc-logs:/var/log/keycloak:ro
+      - bridge-logs:/var/log/mfa:ro
+    healthcheck:
+      test: ["CMD-SHELL", "/var/ossec/bin/wazuh-control status | grep -q 'wazuh-analysisd is running'"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+volumes:
+  ldap-data:
+  ldap-config:
+  kc-db:
+  kc-logs:
+  bridge-logs:
+  openvpn-pki:
+  vpn-client-share:

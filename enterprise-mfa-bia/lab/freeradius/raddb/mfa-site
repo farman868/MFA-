@@ -1,0 +1,34 @@
+# Virtual server: PAP-style User-Password carrying "password + OTP" from OpenVPN.
+server mfa {
+	listen {
+		type = auth
+		ipaddr = *
+		port = 1812
+	}
+
+	authorize {
+		if (!&User-Name || !&User-Password) {
+			reject
+		}
+		update control {
+			&Auth-Type := rest
+		}
+	}
+
+	authenticate {
+		Auth-Type rest {
+			rest
+		}
+	}
+
+	post-auth {
+		update reply {
+			&Reply-Message := "MFA verified"
+		}
+		Post-Auth-Type REJECT {
+			update reply {
+				&Reply-Message := "Authentication failed: check password and one-time code"
+			}
+		}
+	}
+}

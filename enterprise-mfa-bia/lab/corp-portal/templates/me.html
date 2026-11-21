@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}My session{% endblock %}
+{% block body %}
+<h1>My session</h1>
+<section class="card" aria-labelledby="who"><h2 id="who">Identity</h2>
+<dl>
+  <dt>Username</dt><dd>{{ claims.username }}</dd>
+  <dt>Name</dt><dd>{{ claims.name }}</dd>
+  <dt>Email</dt><dd>{{ claims.email }}</dd>
+  <dt>Department</dt><dd>{{ claims.department or "—" }}</dd>
+  <dt>Realm roles</dt><dd>{{ claims.realm_roles | join(", ") }}</dd>
+</dl></section>
+<section class="card" aria-labelledby="assurance"><h2 id="assurance">Authentication assurance</h2>
+<dl>
+  <dt>Assurance level</dt><dd><span class="pill {{ claims.aal }}">{{ claims.aal }}</span> (Enterprise Corp assurance scale: AAL1 password/email OTP, AAL2 TOTP/SMS/backup code, AAL3 WebAuthn)</dd>
+  <dt>MFA method</dt><dd>{{ claims.mfa_label }} <code>{{ claims.mfa_method }}</code></dd>
+  <dt>Authenticated at</dt><dd>{{ claims.auth_time }}</dd>
+  <dt>SSO session</dt><dd><code>{{ claims.session_id }}</code></dd>
+</dl></section>
+<p><a href="/login?force=1">Re-authenticate</a></p>
+{% endblock %}

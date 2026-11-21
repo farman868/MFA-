@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Legacy intranet (baseline){% endblock %}
+{% block body %}
+<h1>Legacy intranet <span class="pill AAL1">baseline · single factor</span></h1>
+<p>This page reproduces the pre-MFA state for the assessment: password only, cleartext LDAP bind, no lockout, no security logging. Do not use it as a pattern.</p>
+{% if result %}
+  {% if result.ok %}<p role="status" class="AAL1">Signed in as <strong>{{ result.name }}</strong> ({{ result.department }}) with a password only.</p>
+  {% else %}<p role="alert" class="bad">Invalid username or password.</p>{% endif %}
+{% endif %}
+<form method="post" class="card">
+  <p><label for="u">Username</label><br><input id="u" name="username" autocomplete="username" required></p>
+  <p><label for="p">Password</label><br><input id="p" name="password" type="password" autocomplete="current-password" required></p>
+  <p><button class="btn" type="submit">Sign in</button></p>
+</form>
+{% endblock %}

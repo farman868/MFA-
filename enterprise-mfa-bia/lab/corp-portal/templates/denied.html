@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Access denied{% endblock %}
+{% block body %}
+<h1 class="bad">Higher assurance required</h1>
+<p role="alert">This area requires <strong>{{ required }}</strong>{% if role %} and the <code>{{ role }}</code> role{% endif %}.
+Your session is at <span class="pill {{ claims.aal }}">{{ claims.aal }}</span> ({{ claims.mfa_label }}).</p>
+<p>Privileged areas need phishing-resistant MFA (a FIDO2 security key or platform biometrics). Contact the IT service desk to be enrolled in the required tier.</p>
+{% endblock %}

@@ -1,0 +1,7 @@
+lab/.env
+docs/evidence/*.json
+__pycache__/
+*.pyc
+lab/keycloak/providers/*/target/
+diagnostics/
+lab/.env.ci-check

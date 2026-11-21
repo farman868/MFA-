@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ app_name }}{% endblock %} · Enterprise Corp</title>
+  <style>
+    :root { --bg:#f7f7f5; --fg:#1d1d1b; --muted:#55554f; --card:#fff; --line:#d6d6d0; --accent:#0b5cad; --ok:#1e6b34; --warn:#8a5a00; --bad:#a1261b; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#16171a; --fg:#ececea; --muted:#a9a9a3; --card:#1f2024; --line:#34353a; --accent:#7ab4f0; --ok:#7fcf8f; --warn:#e2b45a; --bad:#f08a80; } }
+    * { box-sizing:border-box } body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif }
+    header { border-bottom:1px solid var(--line); padding:.9rem 1rem } header .wrap { display:flex; gap:1rem; align-items:center; justify-content:space-between }
+    .wrap { max-width:56rem; margin:0 auto } main.wrap { padding:1.5rem 1rem 3rem }
+    a { color:var(--accent) } a:focus-visible, button:focus-visible { outline:3px solid var(--accent); outline-offset:2px }
+    nav a { margin-left:1rem } .brand { font-weight:700; text-decoration:none; color:var(--fg) }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:1.25rem; margin:1rem 0 }
+    dl { display:grid; grid-template-columns:max-content 1fr; gap:.35rem 1.25rem; margin:0 } dt { color:var(--muted) } dd { margin:0; overflow-wrap:anywhere }
+    .pill { display:inline-block; border:1px solid currentColor; border-radius:999px; padding:0 .6rem; font-weight:600; font-size:.9rem }
+    .AAL3 { color:var(--ok) } .AAL2 { color:var(--accent) } .AAL1 { color:var(--warn) } .bad { color:var(--bad) }
+    .btn { display:inline-block; background:var(--accent); color:var(--bg); padding:.55rem 1rem; border-radius:8px; text-decoration:none; font-weight:600 }
+    code { font-size:.9em }
+  </style>
+</head>
+<body>
+  <header><div class="wrap">
+    <a class="brand" href="/">Enterprise Corp · {{ app_name }}</a>
+    <nav aria-label="Main">{% if claims %}<a href="/me">My session</a><a href="/finance">Finance</a><a href="/admin">Admin</a><a href="/logout">Sign out</a>{% else %}<a href="/login">Sign in</a><a href="/legacy">Legacy (baseline)</a>{% endif %}</nav>
+  </div></header>
+  <main class="wrap" id="main">{% block body %}{% endblock %}</main>
+</body>
+</html>

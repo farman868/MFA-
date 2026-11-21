@@ -1,0 +1,94 @@
+<!--
+  Wazuh decoders - Keycloak IAM events + mfa-otp-bridge security events
+  Install: /var/ossec/etc/decoders/keycloak_decoders.xml   (mounted read-only by lab/docker-compose.yml)
+
+  Input formats (both are key="value" lists in Keycloak's jboss-logging layout):
+    2026-11-19 16:30:01,120 WARN  [org.keycloak.events] (executor-thread-1) type="LOGIN_ERROR", realmId="enterprise-realm", clientId="corp-portal", userId="...", ipAddress="172.20.0.1", error="invalid_otp", ..., username="j.doe", mfa_method="sms-otp"
+    2026-11-19 16:30:01,120 INFO  [mfa-otp-bridge] (AnyIO worker thread) type="SEND_OTP", realmId="enterprise-realm", clientId="corp-portal", userId="", ipAddress="172.20.0.1", username="j.doe", mfa_method="sms-otp", channel="sms", destination="*******007"
+    2026-11-19 16:31:12,004 INFO  [org.keycloak.events] (executor-thread-3) operationType="ACTION", realmId="enterprise-realm", clientId="...", userId="...", ipAddress="...", resourceType="USER", resourcePath="users/<id>/logout"
+
+  Design notes (fixes vs. the original draft):
+    * Keycloak does not emit fields in a fixed order (details such as username/mfa_method are appended,
+      newer versions insert realmName), so one positional regex is brittle. Each field is extracted by its
+      own SIBLING decoder (same name, same parent) - Wazuh evaluates all siblings and merges the fields.
+    * \b anchors stop "type=" from matching inside "auth_type=" and "error=" inside "error_description=".
+    * The username is decoded into the dynamic field keycloak.username (used with <same_field> in
+      correlation rules) and also into the static dstuser field for the dashboard.
+    * The bridge emits the same layout, so no separate JSON decoder path is needed.
+-->
+
+<decoder name="keycloak-events">
+  <prematch type="pcre2">\[(?:org\.keycloak\.events|mfa-otp-bridge)\]</prematch>
+</decoder>
+
+<decoder name="keycloak-events-fields">
+  <parent>keycloak-events</parent>
+  <regex type="pcre2">\btype="?([A-Z_]+)</regex>
+  <order>keycloak.type</order>
+</decoder>
+
+<decoder name="keycloak-events-fields">
+  <parent>keycloak-events</parent>
+  <regex type="pcre2">\boperationType="?([A-Z_]+)</regex>
+  <order>keycloak.operation</order>
+</decoder>
+
+<decoder name="keycloak-events-fields">
+  <parent>keycloak-events</parent>
+  <regex type="pcre2">\brealmId="?([^",\s]+)</regex>
+  <order>keycloak.realm</order>
+</decoder>
+
+<decoder name="keycloak-events-fields">
+  <parent>keycloak-events</parent>
+  <regex type="pcre2">\bclientId="?([^",\s]*)</regex>
+  <order>keycloak.client_id</order>
+</decoder>
+
+<decoder name="keycloak-events-fields">
+  <parent>keycloak-events</parent>
+  <regex type="pcre2">\buserId="?([^",\s]*)</regex>
+  <order>keycloak.user_id</order>
+</decoder>
+
+<decoder name="keycloak-events-fields">
+  <parent>keycloak-events</parent>
+  <regex type="pcre2">\bipAddress="?([0-9A-Fa-f.:]+)</regex>
+  <order>srcip</order>
+</decoder>
+
+<decoder name="keycloak-events-fields">
+  <parent>keycloak-events</parent>
+  <regex type="pcre2">\berror="?([^",\s]+)</regex>
+  <order>keycloak.error</order>
+</decoder>
+
+<decoder name="keycloak-events-fields">
+  <parent>keycloak-events</parent>
+  <regex type="pcre2">\busername="?([^",\s]+)</regex>
+  <order>keycloak.username</order>
+</decoder>
+
+<decoder name="keycloak-events-fields">
+  <parent>keycloak-events</parent>
+  <regex type="pcre2">\busername="?([^",\s]+)</regex>
+  <order>dstuser</order>
+</decoder>
+
+<decoder name="keycloak-events-fields">
+  <parent>keycloak-events</parent>
+  <regex type="pcre2">\b(?:mfa_method|credential_type)="?([^",\s]+)</regex>
+  <order>keycloak.mfa_method</order>
+</decoder>
+
+<decoder name="keycloak-events-fields">
+  <parent>keycloak-events</parent>
+  <regex type="pcre2">\bchannel="?([^",\s]+)</regex>
+  <order>keycloak.channel</order>
+</decoder>
+
+<decoder name="keycloak-events-fields">
+  <parent>keycloak-events</parent>
+  <regex type="pcre2">\bresourcePath="?([^",\s]+)</regex>
+  <order>keycloak.resource_path</order>
+</decoder>

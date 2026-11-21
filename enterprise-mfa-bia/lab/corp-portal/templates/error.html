@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Sign-in error{% endblock %}
+{% block body %}
+<h1 class="bad">Sign-in failed</h1>
+<p role="alert"><code>{{ error }}</code> {{ description }}</p>
+<p><a class="btn" href="/login">Try again</a></p>
+{% endblock %}

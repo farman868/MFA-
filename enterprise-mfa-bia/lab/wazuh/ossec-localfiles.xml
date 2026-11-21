@@ -1,0 +1,12 @@
+<!-- Appended to /var/ossec/etc/ossec.conf by scripts/wazuh_enable_ingestion.sh.
+     Wazuh merges multiple <ossec_config> blocks, so the image's default configuration is left intact. -->
+<ossec_config>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/keycloak/keycloak.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/mfa/bridge-events.log</location>
+  </localfile>
+</ossec_config>

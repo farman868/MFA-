@@ -1,0 +1,233 @@
+# Enterprise legacy directory (single-factor baseline) - LAB DATA ONLY
+# All test users share the lab password documented in README.md
+
+dn: ou=Executive,dc=corp,dc=enterprise,dc=local
+objectClass: organizationalUnit
+ou: Executive
+
+dn: ou=Engineering,dc=corp,dc=enterprise,dc=local
+objectClass: organizationalUnit
+ou: Engineering
+
+dn: ou=Finance,dc=corp,dc=enterprise,dc=local
+objectClass: organizationalUnit
+ou: Finance
+
+dn: ou=GeneralStaff,dc=corp,dc=enterprise,dc=local
+objectClass: organizationalUnit
+ou: GeneralStaff
+
+dn: ou=Contractors,dc=corp,dc=enterprise,dc=local
+objectClass: organizationalUnit
+ou: Contractors
+
+dn: ou=Groups,dc=corp,dc=enterprise,dc=local
+objectClass: organizationalUnit
+ou: Groups
+
+dn: ou=ServiceAccounts,dc=corp,dc=enterprise,dc=local
+objectClass: organizationalUnit
+ou: ServiceAccounts
+
+dn: uid=a.mehta,ou=Executive,dc=corp,dc=enterprise,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: a.mehta
+cn: Anita Mehta
+givenName: Anita
+sn: Mehta
+title: Chief Executive Officer
+departmentNumber: Executive
+mail: a.mehta@corp.enterprise.local
+mobile: +91900000001
+employeeNumber: E1001
+description: Executive tier; travels frequently; platform authenticator (Windows Hello/Touch ID)
+userPassword: {SSHA}bIsXX4+OrhBq6P+aN1DBjsk7NF23tfmplR1uRg==
+
+dn: uid=r.iyer,ou=Executive,dc=corp,dc=enterprise,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: r.iyer
+cn: Rahul Iyer
+givenName: Rahul
+sn: Iyer
+title: Chief Information Security Officer
+departmentNumber: Executive
+mail: r.iyer@corp.enterprise.local
+mobile: +91900000002
+employeeNumber: E1002
+description: Privileged IAM administrator; FIDO2 hardware key holder
+userPassword: {SSHA}bIsXX4+OrhBq6P+aN1DBjsk7NF23tfmplR1uRg==
+
+dn: uid=s.kumar,ou=Engineering,dc=corp,dc=enterprise,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: s.kumar
+cn: Sneha Kumar
+givenName: Sneha
+sn: Kumar
+title: Principal Platform Engineer
+departmentNumber: Engineering
+mail: s.kumar@corp.enterprise.local
+mobile: +91900000003
+employeeNumber: E1003
+description: Privileged remote engineer; FIDO2 hardware key
+userPassword: {SSHA}bIsXX4+OrhBq6P+aN1DBjsk7NF23tfmplR1uRg==
+
+dn: uid=p.nair,ou=Engineering,dc=corp,dc=enterprise,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: p.nair
+cn: Pranav Nair
+givenName: Pranav
+sn: Nair
+title: Software Engineer
+departmentNumber: Engineering
+mail: p.nair@corp.enterprise.local
+mobile: +91900000004
+employeeNumber: E1004
+description: Remote engineer; platform biometrics
+userPassword: {SSHA}bIsXX4+OrhBq6P+aN1DBjsk7NF23tfmplR1uRg==
+
+dn: uid=f.dsouza,ou=Finance,dc=corp,dc=enterprise,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: f.dsouza
+cn: Fiona Dsouza
+givenName: Fiona
+sn: Dsouza
+title: Finance Controller
+departmentNumber: Finance
+mail: f.dsouza@corp.enterprise.local
+mobile: +91900000005
+employeeNumber: E1005
+description: Handles payment approvals; authenticator app
+userPassword: {SSHA}bIsXX4+OrhBq6P+aN1DBjsk7NF23tfmplR1uRg==
+
+dn: uid=k.shetty,ou=Finance,dc=corp,dc=enterprise,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: k.shetty
+cn: Karthik Shetty
+givenName: Karthik
+sn: Shetty
+title: Financial Analyst
+departmentNumber: Finance
+mail: k.shetty@corp.enterprise.local
+mobile: +91900000006
+employeeNumber: E1006
+description: Remote analyst; authenticator app
+userPassword: {SSHA}bIsXX4+OrhBq6P+aN1DBjsk7NF23tfmplR1uRg==
+
+dn: uid=j.doe,ou=GeneralStaff,dc=corp,dc=enterprise,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: j.doe
+cn: John Doe
+givenName: John
+sn: Doe
+title: Operations Associate
+departmentNumber: GeneralStaff
+mail: j.doe@corp.enterprise.local
+mobile: +91900000007
+employeeNumber: E1007
+description: No corporate smartphone; SMS/Email OTP fallback tier
+userPassword: {SSHA}bIsXX4+OrhBq6P+aN1DBjsk7NF23tfmplR1uRg==
+
+dn: uid=m.rao,ou=GeneralStaff,dc=corp,dc=enterprise,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: m.rao
+cn: Meera Rao
+givenName: Meera
+sn: Rao
+title: HR Generalist
+departmentNumber: GeneralStaff
+mail: m.rao@corp.enterprise.local
+mobile: +91900000008
+employeeNumber: E1008
+description: Hybrid worker; authenticator app
+userPassword: {SSHA}bIsXX4+OrhBq6P+aN1DBjsk7NF23tfmplR1uRg==
+
+dn: uid=l.fernandes,ou=GeneralStaff,dc=corp,dc=enterprise,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: l.fernandes
+cn: Lionel Fernandes
+givenName: Lionel
+sn: Fernandes
+title: Customer Support Lead
+departmentNumber: GeneralStaff
+mail: l.fernandes@corp.enterprise.local
+mobile: +91900000009
+employeeNumber: E1009
+description: Screen-reader user (low vision); Email OTP accessibility fallback
+userPassword: {SSHA}bIsXX4+OrhBq6P+aN1DBjsk7NF23tfmplR1uRg==
+
+dn: uid=c.vendor,ou=Contractors,dc=corp,dc=enterprise,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: c.vendor
+cn: Chris Vendor
+givenName: Chris
+sn: Vendor
+title: External Contractor (MSP)
+departmentNumber: Contractors
+mail: c.vendor@corp.enterprise.local
+mobile: +91900000010
+employeeNumber: E1010
+description: Third-party contractor; time-boxed access; authenticator app
+userPassword: {SSHA}bIsXX4+OrhBq6P+aN1DBjsk7NF23tfmplR1uRg==
+
+dn: cn=mfa-tier-webauthn,ou=Groups,dc=corp,dc=enterprise,dc=local
+objectClass: groupOfNames
+cn: mfa-tier-webauthn
+description: AAL3 phishing-resistant tier (FIDO2/WebAuthn required)
+member: uid=a.mehta,ou=Executive,dc=corp,dc=enterprise,dc=local
+member: uid=r.iyer,ou=Executive,dc=corp,dc=enterprise,dc=local
+member: uid=s.kumar,ou=Engineering,dc=corp,dc=enterprise,dc=local
+member: uid=p.nair,ou=Engineering,dc=corp,dc=enterprise,dc=local
+
+dn: cn=it-admins,ou=Groups,dc=corp,dc=enterprise,dc=local
+objectClass: groupOfNames
+cn: it-admins
+description: Privileged IT and IAM administrators
+member: uid=r.iyer,ou=Executive,dc=corp,dc=enterprise,dc=local
+member: uid=s.kumar,ou=Engineering,dc=corp,dc=enterprise,dc=local
+
+dn: cn=vpn-users,ou=Groups,dc=corp,dc=enterprise,dc=local
+objectClass: groupOfNames
+cn: vpn-users
+description: Authorized for remote access VPN
+member: uid=r.iyer,ou=Executive,dc=corp,dc=enterprise,dc=local
+member: uid=s.kumar,ou=Engineering,dc=corp,dc=enterprise,dc=local
+member: uid=p.nair,ou=Engineering,dc=corp,dc=enterprise,dc=local
+member: uid=k.shetty,ou=Finance,dc=corp,dc=enterprise,dc=local
+member: uid=m.rao,ou=GeneralStaff,dc=corp,dc=enterprise,dc=local
+member: uid=c.vendor,ou=Contractors,dc=corp,dc=enterprise,dc=local
+
+dn: cn=mfa-tier-totp,ou=Groups,dc=corp,dc=enterprise,dc=local
+objectClass: groupOfNames
+cn: mfa-tier-totp
+description: AAL2 tier (TOTP authenticator app)
+member: uid=f.dsouza,ou=Finance,dc=corp,dc=enterprise,dc=local
+member: uid=k.shetty,ou=Finance,dc=corp,dc=enterprise,dc=local
+member: uid=m.rao,ou=GeneralStaff,dc=corp,dc=enterprise,dc=local
+member: uid=c.vendor,ou=Contractors,dc=corp,dc=enterprise,dc=local
+
+dn: cn=mfa-tier-otp-fallback,ou=Groups,dc=corp,dc=enterprise,dc=local
+objectClass: groupOfNames
+cn: mfa-tier-otp-fallback
+description: Accessibility/no-smartphone fallback tier (SMS or Email OTP)
+member: uid=j.doe,ou=GeneralStaff,dc=corp,dc=enterprise,dc=local
+member: uid=l.fernandes,ou=GeneralStaff,dc=corp,dc=enterprise,dc=local
