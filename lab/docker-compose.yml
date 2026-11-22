@@ -243,7 +243,7 @@ services:
       - kc-logs:/var/log/keycloak:ro
       - bridge-logs:/var/log/mfa:ro
     healthcheck:
-      test: ["CMD-SHELL", "test -S /var/ossec/queue/sockets/logtest"]
+      test: ["CMD-SHELL", "/var/ossec/bin/wazuh-control status | grep -q 'wazuh-analysisd is running' && test -S /var/ossec/queue/sockets/logtest"]
       interval: 10s
       timeout: 5s
       retries: 25
