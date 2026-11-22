@@ -485,7 +485,7 @@ def alert_user(alert: dict) -> str:
 
 def logtest(lines: list[str]) -> str:
     out = ""
-    for _ in range(5):
+    for _ in range(10):
         r = compose("exec", "-T", "wazuh-manager", "/var/ossec/bin/wazuh-logtest",
                     input_text="\n".join(lines) + "\n", timeout=240)
         out = r.stdout + r.stderr

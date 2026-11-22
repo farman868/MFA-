@@ -200,6 +200,14 @@ def _webauthn_journey(admin: KCAdmin, username: str, kind: str) -> tuple[Browser
                            "without one (remove it in the admin console or use scripts/teardown_lab.sh --purge)")
     va = VirtualAuthenticator(kind)
     email = user["email"]
+
+    # Ensure webauthn-register is in requiredActions for enrolment
+    rep = admin.call("GET", f"/users/{user['id']}")[1]
+    actions = set(rep.get("requiredActions", [])) - {"CONFIGURE_RECOVERY_AUTHN_CODES"}
+    actions.add("webauthn-register")
+    rep["requiredActions"] = sorted(actions)
+    admin.call("PUT", f"/users/{user['id']}", rep)
+
     # First sign-in: password -> initial-enrolment Email OTP -> WebAuthn registration (required action)
     b = login(Browser(), username, LAB_USER_PASSWORD)
     choose = b.form("kc-bridge-otp-choose")
