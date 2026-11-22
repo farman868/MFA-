@@ -142,3 +142,5 @@ INFO
 if [ "$VERIFY" = 1 ]; then
   python3 "$ROOT/scripts/verify_mfa.py"
 fi
+
+# Sync trigger for CI
