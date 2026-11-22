@@ -230,7 +230,8 @@ services:
   # ---------------------------------------------------------------- SIEM
   wazuh-manager:
     <<: *restart
-    image: wazuh/wazuh-manager:4.9.2
+    build: ./wazuh
+    image: enterprise-mfa-lab/wazuh-manager:4.9.2-mfa
     hostname: wazuh-manager
     ulimits:
       memlock: { soft: -1, hard: -1 }
@@ -242,11 +243,11 @@ services:
       - kc-logs:/var/log/keycloak:ro
       - bridge-logs:/var/log/mfa:ro
     healthcheck:
-      test: ["CMD-SHELL", "/var/ossec/bin/wazuh-control status | grep -q 'wazuh-analysisd is running'"]
-      interval: 15s
-      timeout: 10s
-      retries: 20
-      start_period: 60s
+      test: ["CMD-SHELL", "test -S /var/ossec/queue/sockets/logtest"]
+      interval: 10s
+      timeout: 5s
+      retries: 25
+      start_period: 25s
 
 volumes:
   ldap-data:

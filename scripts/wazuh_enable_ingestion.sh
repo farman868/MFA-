@@ -12,10 +12,8 @@ docker compose exec -T "$SVC" chown -R wazuh:wazuh /var/ossec/etc/decoders/ /var
 docker compose exec -T "$SVC" chmod 660 /var/ossec/etc/decoders/keycloak_decoders.xml /var/ossec/etc/rules/keycloak_rules.xml 2>/dev/null || true
 
 if docker compose exec -T "$SVC" grep -q "/var/log/keycloak/keycloak.log" /var/ossec/etc/ossec.conf; then
-  echo "[wazuh] ingestion already configured"
-else
-  docker compose exec -T "$SVC" sh -c 'cat >> /var/ossec/etc/ossec.conf' < wazuh/ossec-localfiles.xml
-  echo "[wazuh] localfile blocks appended"
+  echo "[wazuh] ingestion already configured in image"
+  exit 0
 fi
 # Ensure ownership of queue sockets
 docker compose exec -T "$SVC" chown -R wazuh:wazuh /var/ossec/queue/ 2>/dev/null || true
