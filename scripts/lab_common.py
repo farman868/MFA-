@@ -485,11 +485,12 @@ def alert_user(alert: dict) -> str:
 
 def logtest(lines: list[str]) -> str:
     out = ""
-    for _ in range(10):
+    for _ in range(12):
         r = compose("exec", "-T", "wazuh-manager", "/var/ossec/bin/wazuh-logtest",
                     input_text="\n".join(lines) + "\n", timeout=240)
         out = r.stdout + r.stderr
         if "error when connecting with wazuh-analysisd" not in out:
             return out
+        compose("exec", "-T", "wazuh-manager", "/var/ossec/bin/wazuh-control", "start")
         time.sleep(3)
     return out

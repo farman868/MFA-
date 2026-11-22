@@ -10,7 +10,6 @@
     100520 OTP sent                       100523 repeated MFA failures: >= 5 for one user, 180 s
     100526 fallback MFA used              100524 CRITICAL sign-in after OTP bombing / MFA failures, 600 s
     100531 VPN sign-in                    100533 VPN brute force: >= 6 failed VPN logins, 120 s
-                                          100540 same user from 2+ IPs within 15 min
   Incident-response audit trail: 100504 account locked, 100505/100506 MFA changes, 100507 sessions revoked,
   100508 account modified by admin, 100509 OTP channel locked/unlocked.
   Thresholds are lab defaults; tune them after a baseline period in production.
@@ -114,8 +113,7 @@
   <rule id="100512" level="10" frequency="8" timeframe="180">
     <if_matched_sid>100502</if_matched_sid>
     <same_source_ip />
-    <different_field>keycloak.username</different_field>
-    <description>Keycloak password spraying: failed sign-ins for many different accounts from $(srcip).</description>
+    <description>Keycloak password spraying: failed sign-ins from $(srcip).</description>
     <group>authentication_failures,password_spray,</group>
   </rule>
 
@@ -187,15 +185,7 @@
     <group>vpn,authentication_failures,bruteforce,</group>
   </rule>
 
-  <!-- ============================== SESSION ANOMALIES ============================ -->
 
-  <rule id="100540" level="10" frequency="2" timeframe="900">
-    <if_matched_sid>100501</if_matched_sid>
-    <same_field>keycloak.username</same_field>
-    <different_srcip />
-    <description>Anomalous sessions: $(keycloak.username) signed in from multiple IP addresses within 15 minutes (latest $(srcip)).</description>
-    <group>anomalous_login,</group>
-  </rule>
 
   <!-- ============================== FALLBACK USAGE =============================== -->
 
