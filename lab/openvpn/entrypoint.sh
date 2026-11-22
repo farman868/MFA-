@@ -9,9 +9,9 @@ TEMP_PKI=/tmp/easyrsa-pki
 if [ ! -f "$PKI_DIR/issued/vpn-gateway.crt" ]; then
   echo "[openvpn] initialising lab PKI (EC P-256)"
   rm -rf "$TEMP_PKI"
-  export EASYRSA_BATCH=1 EASYRSA_PKI="$TEMP_PKI" EASYRSA_REQ_CN="Enterprise Corp Lab VPN CA" EASYRSA_ALGO=ec EASYRSA_CURVE=prime256v1
+  export EASYRSA_BATCH=1 EASYRSA_PKI="$TEMP_PKI" EASYRSA_ALGO=ec EASYRSA_CURVE=prime256v1
   "$EASYRSA" init-pki
-  "$EASYRSA" build-ca nopass
+  EASYRSA_REQ_CN="Enterprise Corp Lab VPN CA" "$EASYRSA" build-ca nopass
   "$EASYRSA" build-server-full vpn-gateway nopass
   mkdir -p "$PKI_DIR"
   cp -a "$TEMP_PKI"/* "$PKI_DIR"/
