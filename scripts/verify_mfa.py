@@ -209,6 +209,10 @@ def _webauthn_journey(admin: KCAdmin, username: str, kind: str) -> tuple[Browser
     if not code:
         raise RuntimeError("initial-enrolment email OTP not received")
     b.submit(b.form("kc-bridge-otp-verify"), otp=code, action="verify")
+    if not b.has_form("register"):
+        setup = next((f for f in b.forms() if any("RecoveryAuthnCodes" in k for k in f["fields"])), None)
+        if setup:
+            b.submit(setup, kcRecoveryCodesConfirmationCheck="on")
     b.submit(b.form("register"), **va.register(b.body))
     enrol = portal_session_fields(b.body)
     if enrol.get("mfa_method") != "email-otp":

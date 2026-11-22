@@ -106,10 +106,10 @@ ok "browser flow = enterprise-browser, brute-force protection on, events on"
 log "enabling backup codes (Recovery Authentication Codes required action)"
 if ! "${KCADM[@]}" get "authentication/required-actions/CONFIGURE_RECOVERY_AUTHN_CODES" -r "$REALM" "${KCCFG[@]}" >/dev/null 2>&1; then
   "${KCADM[@]}" create authentication/register-required-action -r "$REALM" "${KCCFG[@]}" \
-    -s providerId=CONFIGURE_RECOVERY_AUTHN_CODES -s name="Recovery Authentication Codes" </dev/null || true
+    -s providerId=CONFIGURE_RECOVERY_AUTHN_CODES -s name="Recovery Authentication Codes" -s defaultAction=false </dev/null || true
 fi
 "${KCADM[@]}" update "authentication/required-actions/CONFIGURE_RECOVERY_AUTHN_CODES" -r "$REALM" "${KCCFG[@]}" \
-  -s enabled=true </dev/null && ok "backup codes available in the account console" || log "warning: could not enable backup codes"
+  -s enabled=true -s defaultAction=false </dev/null && ok "backup codes available in the account console" || log "warning: could not enable backup codes"
 
 log "triggering LDAP full sync (corp-ldap -> Keycloak)"
 "${KCADM[@]}" create "user-storage/corp-ldap/sync?action=triggerFullSync" -r "$REALM" "${KCCFG[@]}" </dev/null

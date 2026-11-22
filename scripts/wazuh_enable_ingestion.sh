@@ -8,6 +8,8 @@ SVC=wazuh-manager
 # Install custom decoders and rules
 docker compose cp ../siem/keycloak_decoders.xml "$SVC":/var/ossec/etc/decoders/
 docker compose cp ../siem/keycloak_rules.xml "$SVC":/var/ossec/etc/rules/
+docker compose exec -T "$SVC" chown -R wazuh:wazuh /var/ossec/etc/decoders/ /var/ossec/etc/rules/ 2>/dev/null || true
+docker compose exec -T "$SVC" chmod 660 /var/ossec/etc/decoders/keycloak_decoders.xml /var/ossec/etc/rules/keycloak_rules.xml 2>/dev/null || true
 
 if docker compose exec -T "$SVC" grep -q "/var/log/keycloak/keycloak.log" /var/ossec/etc/ossec.conf; then
   echo "[wazuh] ingestion already configured"
@@ -17,8 +19,8 @@ else
 fi
 # Validate configuration + custom ruleset before restarting (wazuh-analysisd -t = test config and exit).
 docker compose exec -T "$SVC" /var/ossec/bin/wazuh-analysisd -t
-docker compose exec -T "$SVC" /var/ossec/bin/wazuh-control restart >/dev/null
-for _ in $(seq 1 30); do
+docker compose restart "$SVC"
+for _ in $(seq 1 60); do
   if docker compose exec -T "$SVC" /var/ossec/bin/wazuh-control status 2>/dev/null | grep -q "wazuh-analysisd is running"; then
     echo "[wazuh] manager restarted; alerts -> /var/ossec/logs/alerts/alerts.json"
     exit 0

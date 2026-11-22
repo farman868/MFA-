@@ -21,7 +21,7 @@ RESULT=$(printf 'User-Name = "%s"\nUser-Password = "%s"\nCalling-Station-Id = "%
   "$(escape "$USERNAME")" "$(escape "$PASSWORD")" "${untrusted_ip:-unknown}" \
   | radclient -t 12 -r 1 "$RADIUS_SERVER" auth "$SECRET" 2>&1)
 
-if grep -q "Access-Accept" <<<"$RESULT"; then
+if grep -q "Received Access-Accept" <<<"$RESULT" && ! grep -q "Access-Reject" <<<"$RESULT"; then
   echo "radius-verify: Access-Accept for $USERNAME from ${untrusted_ip:-unknown}" >&2
   exit 0
 fi
