@@ -136,7 +136,7 @@ sn: Doe
 title: Operations Associate
 departmentNumber: GeneralStaff
 mail: j.doe@corp.enterprise.local
-mobile: +91900000007
+mobile: +919000000007
 employeeNumber: E1007
 description: No corporate smartphone; SMS/Email OTP fallback tier
 userPassword: {SSHA}bIsXX4+OrhBq6P+aN1DBjsk7NF23tfmplR1uRg==

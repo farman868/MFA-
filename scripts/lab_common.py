@@ -194,10 +194,16 @@ class Browser:
 
 
 def portal_session_fields(body: str) -> dict:
-    text = re.sub(r"<[^>]+>", " ", body)
-    aal = re.search(r"\b(AAL[123])\b", text)
+    aal_m = re.search(r'class="pill\s+(AAL[123])"', body)
+    if aal_m:
+        aal = aal_m.group(1)
+    else:
+        clean = re.sub(r"<(style|script)\b[^>]*>.*?</\1>", " ", body, flags=re.S | re.I)
+        text = re.sub(r"<[^>]+>", " ", clean)
+        m = re.search(r"\b(AAL[123])\b", text)
+        aal = m.group(1) if m else None
     method = re.search(r"<code>(webauthn|totp|sms-otp|email-otp|recovery-code|none)</code>", body)
-    return {"aal": aal.group(1) if aal else None, "mfa_method": method.group(1) if method else None}
+    return {"aal": aal, "mfa_method": method.group(1) if method else None}
 
 
 def pkce_pair() -> tuple[str, str]:

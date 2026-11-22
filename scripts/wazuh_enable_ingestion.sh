@@ -4,6 +4,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/../lab"
 SVC=wazuh-manager
+
+# Install custom decoders and rules
+docker compose cp ../siem/keycloak_decoders.xml "$SVC":/var/ossec/etc/decoders/
+docker compose cp ../siem/keycloak_rules.xml "$SVC":/var/ossec/etc/rules/
+
 if docker compose exec -T "$SVC" grep -q "/var/log/keycloak/keycloak.log" /var/ossec/etc/ossec.conf; then
   echo "[wazuh] ingestion already configured"
 else

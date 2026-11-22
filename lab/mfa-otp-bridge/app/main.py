@@ -174,19 +174,19 @@ app = FastAPI(title="mfa-otp-bridge", version="1.0.0", docs_url="/docs", redoc_u
 
 class SendRequest(BaseModel):
     username: str = Field(min_length=1, max_length=128)
-    user_id: str = ""
-    realm: str = REALM
-    client_id: str = ""
+    user_id: str | None = ""
+    realm: str | None = REALM
+    client_id: str | None = ""
     channel: str = Field(pattern="^(sms|email)$")
     destination: str = Field(min_length=3, max_length=254)
-    ip_address: str = ""
+    ip_address: str | None = ""
 
 
 class VerifyRequest(BaseModel):
     challenge_id: str = Field(min_length=8, max_length=64)
     code: str = Field(max_length=16)
-    username: str = ""
-    ip_address: str = ""
+    username: str | None = ""
+    ip_address: str | None = ""
 
 
 @app.get("/healthz")

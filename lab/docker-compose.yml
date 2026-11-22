@@ -239,8 +239,6 @@ services:
       # No indexer/dashboard in this lab: analysisd writes alerts to /var/ossec/logs/alerts/alerts.json.
       FILEBEAT_SSL_VERIFICATION_MODE: none
     volumes:
-      - ../siem/keycloak_decoders.xml:/var/ossec/etc/decoders/keycloak_decoders.xml:ro
-      - ../siem/keycloak_rules.xml:/var/ossec/etc/rules/keycloak_rules.xml:ro
       - kc-logs:/var/log/keycloak:ro
       - bridge-logs:/var/log/mfa:ro
     healthcheck:
