@@ -4,13 +4,18 @@ set -euo pipefail
 : "${RADIUS_SHARED_SECRET:?RADIUS_SHARED_SECRET must be set}"
 PKI_DIR=/etc/openvpn/pki
 EASYRSA=/usr/share/easy-rsa/easyrsa
-export EASYRSA_BATCH=1 EASYRSA_PKI="$PKI_DIR" EASYRSA_REQ_CN="Enterprise Corp Lab VPN CA" EASYRSA_ALGO=ec EASYRSA_CURVE=prime256v1
+TEMP_PKI=/tmp/easyrsa-pki
 
 if [ ! -f "$PKI_DIR/issued/vpn-gateway.crt" ]; then
   echo "[openvpn] initialising lab PKI (EC P-256)"
+  rm -rf "$TEMP_PKI"
+  export EASYRSA_BATCH=1 EASYRSA_PKI="$TEMP_PKI" EASYRSA_REQ_CN="Enterprise Corp Lab VPN CA" EASYRSA_ALGO=ec EASYRSA_CURVE=prime256v1
   "$EASYRSA" init-pki
   "$EASYRSA" build-ca nopass
   "$EASYRSA" build-server-full vpn-gateway nopass
+  mkdir -p "$PKI_DIR"
+  cp -a "$TEMP_PKI"/* "$PKI_DIR"/
+  rm -rf "$TEMP_PKI"
 fi
 
 # Share the CA certificate with VPN clients (lab: shared volume; production: MDM / client profile).
