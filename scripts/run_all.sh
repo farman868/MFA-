@@ -2,6 +2,7 @@
 # End-to-end run for submission evidence:
 #   setup (build + provision) -> baseline assessment -> verification -> IR drill -> usage report.
 # Each step writes JSON/Markdown evidence into docs/evidence/; the drill also updates docs/06.
+# Lab verification pipeline
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
