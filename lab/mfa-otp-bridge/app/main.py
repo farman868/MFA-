@@ -34,6 +34,7 @@ from typing import Any
 
 import requests
 from fastapi import FastAPI, Header, HTTPException, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 
@@ -170,6 +171,13 @@ def deliver_sms(to: str, code: str) -> None:
 # --------------------------------------------------------------------------- API
 
 app = FastAPI(title="mfa-otp-bridge", version="1.0.0", docs_url="/docs", redoc_url=None)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    raw = await request.body()
+    _events.warning(f"422 Validation error on {request.url}: {exc.errors()} | body={raw.decode('utf-8', errors='replace')}")
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
 class SendRequest(BaseModel):

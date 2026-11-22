@@ -17,7 +17,11 @@ server mfa {
 
 	authenticate {
 		Auth-Type rest {
-			rest
+			rest {
+				fail = reject
+				userlock = reject
+				notfound = reject
+			}
 		}
 	}
 

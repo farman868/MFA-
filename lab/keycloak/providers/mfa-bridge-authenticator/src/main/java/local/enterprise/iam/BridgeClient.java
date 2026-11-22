@@ -18,6 +18,7 @@ import org.keycloak.util.JsonSerialization;
 final class BridgeClient {
 
     private static final HttpClient HTTP = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
             .connectTimeout(Duration.ofSeconds(3))
             .build();
 
